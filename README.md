@@ -63,14 +63,44 @@ Each EBS volume is placed in a specific AWS Availability Zone.
   * Lowest cost per gigabyte of all EBS volume types that IS BOOTABLE
   * magnetic volumes are ideal for infrequently accessed data where lowest storage cost is important
 
+## EC2 Linux server lab
 
+* After logging on to the instance (usually as user 'ec2-user')
+  * sudo su (elevate session access to act as 'root' user)
+  * yum update -y (do this as 'root' to install updates from yum)
 
+## Elastic Load Balancer (ELB)
 
+There are three types:
+* Application Load Balancer (OSI layer 7)
+  * Best suited for load balancing of HTTP and HTTPS traffic
+  * intelligent, and can create advanced routing requests (ex: send specified requests to a specific web server)
+* Network Load Balancer (OSI layer 4)
+  * best suited for load balancing of TCP traffic where extreme performance is required
+  * highest performance, but most expensive AWS load balancer type
+* Classic Load Balancer
+  * deprecated type
+  * Can do some of what the above types do, but not as well
 
+REFERENCE: https://en.wikipedia.org/wiki/OSI_model
 
+### Elastic Load Balancer tips
+* If your application stops responding, the ELB (Classic Load Balancer) repsonds with a Error 504 (Gateway timeout)
+  * This means the application has not responded within the idle timeout period
+  * You must identify where the application is failing, and scale it up or out where possible
+* The ELB will forward traffic to your application, so the application will only see the ELB's private IP address
+  * If your app needs to know the original source IP address, check the 'X-Forwarded-For' header value
+ 
+## Route53
 
+Route53 is Amazon's DNS service.
 
+Allows you to map your domain names to:
+* EC2 instances
+* load balancers
+* S3 buckets
 
+In addition to standard DNS features, you can also create a record set that is an 'alias' for an AWS resource, such as a load balancer
 
 
 
