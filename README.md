@@ -152,6 +152,7 @@ In addition to standard DNS features, you can also create a record set that is a
 * `aws s3 ls`
   * You should now be able to issue S3 commands via CLI without a secret access key
   * See EC2 and CLI lab notes above for more S3 commands
+* **NOTE:** Remember to terminate your EC2 instance when you're done, if you created it just for this lab
 
 ### exam tips related to this lab
 
@@ -161,10 +162,94 @@ In addition to standard DNS features, you can also create a record set that is a
 * You can change a policy on a Role and it will take immediate affect
 * You can attach and detact roles to running EC2 instances without having to stop or terminate these instances
 
+# RDS (Relational Database Service)
+
+## RDS 101 lecture
+
+AWS Database Types summary
+* RDS - OLTP (Online Transaction Processing)
+  * SQL Server
+  * Oracle
+  * MySQL
+  * PostgreSQL
+  * Aurora
+  * MariaDB
+ * NoSQL
+   * DynamoDB
+ * OLAP (Online Analytics Processing)
+   * RedShift
+ * In-memory caching
+   * Elasticache
+      * Memcached
+      * Redis
+
+## LAB: RDS
+
+**Creating the RDS database instance**
+* Go to RDS in Management Console, then click "Create database" button
+* Choose "Standard create", and select "MySQL" as the database engine type
+* Choose "Free Tier" template type
+* Set a DB instance identifier value (I used "mysqltest")
+* Set 'Master username' and 'Master password' to appropriate values
+* Use cheapest option for DB instance size (probably "db.t2.micro")
+* Leave default values for Storage type
+* Availability and durability options will be unavailable on Free Tier
+* Connectivity
+  * Use your default VPC
+  * Choose "No" for Publicly accessible (no need for public access in this lab)
+  * Choose "Create new" for VPC security group
+    * name it something obvious such as "RDS-LAB-SG"
+  * No preference for AZ
+  * Keep default port number
+* Database authentication
+  * Password authentication
+* Additional configuration
+  * Initial database name: "mysqltest"
+* Finally... click "Create database" button at bottom of page
+
+**Creating the EC2 Linux 2 instance that will interact with the RDS database**
+* You want to create a new (cheap) EC2 AWS Linux 2 instance via the Management Console page as done in earlier lab, but...
+  * You'll need to paste the following into the "User data" field under "Advanced Details" when creating the instance
+  
+```
+#!/bin/bash  
+yum install httpd php php-mysql -y  
+yum update -y  
+chkconfig httpd on  
+service httpd start  
+echo "<?php phpinfo();?>" > /var/www/html/index.php
+cd /var/www/html  
+wget https://s3.amazonaws.com/acloudguru-production/connect.php
+```
+
+* When creating your instance, create a new Security Group with inbound access to SSH (22) and HTTP (80)
+  * You'll need to mess with this security group during the lab
+* Create your EC2 instance, then login via SSH, and `sudo su`
+* You'll need to edit the template 'connect.php' file that 'wget' pulled from the instructor's S3 bucket
+  * `cd /var/www/html`
+  * `nano connect.php`
+  * Replace the 'username', 'password' and 'dbname' values with the values you used to create your RDS database
+  * Replace the 'hostname' value with the DNS name of your RDS database
+    * You can copy this value from the Management Console. Look at your instance details in RDS and find 'Endpoint'
+      * example: `mysqltest.cmcvhw9a8kfe.us-east-1.rds.amazonaws.com`
+* In a web browser, go here first: `http://1.2.3.4/`
+  * Replace the IP address with the **public** IP address of your EC2 test instance
+  * You should get a diagnostic page for the PHP web server on your EC2 test instance
+* In the web browser, change the URL to this: `http://1.2.3.4/connect.php`
+  * The browser will hang, and eventually display an error. This is expected because we now need to make one more Security Groups config change.
+* In the Management Console, go back to RDS and get the instance details for your test database
+* Find the 'Security group rules' section, and select the 'Inbound' security group for your test database
+* Edit the inbound security group to allow your EC2 test instance to make database connections
+  * Select 'Inbound rules', and click 'Edit inbound rules'
+  * Click 'Add rule', and select "MYSQL/Aurora" (port 3306)
+  * Leave 'Source' as 'Custom', click in the search box, and start typing 'sg-'
+  * Auto-complete should present some options. Choose the SG used by your EC2 test instance.
+  * Click 'Save rules'. Your EC2 test instance SG should now be allowed inbound access to your RDS test DB SG.
+* In the web browser, try this URL again: `http://1.2.3.4/connect.php`
+  * You should now get the expected response with 'Connected to MySQL' at the start
 
 
-
-
+  
 
 
 
