@@ -7,6 +7,9 @@ Repo of misc files from my AWS Certified Developer Associate 2020 certification 
 * Roles (useful for server instances and IAM users from other accounts)
 * Policies (can be associated with Users, Groups or Roles)
 
+You should create at least one IAM user in the IAM lab for this section.
+You'll need this later on during other labs. For example, the AWS CLI lab requires an IAM user with a programmatic access key.
+
 # EC2
 
 ## pricing models
@@ -63,11 +66,32 @@ Each EBS volume is placed in a specific AWS Availability Zone.
   * Lowest cost per gigabyte of all EBS volume types that IS BOOTABLE
   * magnetic volumes are ideal for infrequently accessed data where lowest storage cost is important
 
-## EC2 Linux server lab
+## EC2 Linux server lab (and CLI stuff)
 
+* Create a new (cheap) EC2 AWS Linux 2 instance via the Management Console page
 * After logging on to the instance (usually as user 'ec2-user')
   * sudo su (elevate session access to act as 'root' user)
   * yum update -y (do this as 'root' to install updates from yum)
+  * aws s3 ls
+    * NOTE: The CLI command above **should** fail because CLI rights are not configured yet
+  * aws configure
+    * Enter you IAM user's secret access key id and key value when prompted
+    * Default region name and output format are optional (can be left blank)
+  * aws s3 ls
+  * aws s3 mb s3://test-bucket-delete-me-amh
+  * aws s3 ls
+  * echo 'Hello, World!' > hello.txt
+  * ls
+  * aws s3 cp hello.txt s3://test-bucket-delete-me-amh
+  * aws s3 ls s3://test-bucket-delete-me-amh
+
+### AWS CLI tips
+
+* Least Privilege - Always give users the minimum amount of access required
+* Create Groups - Assign users to Groups, and assign permissions to the Group rather than the User. Group permissions are assigned via policy documents.
+* Secret Access Key - You will only see this once! You must save it somewhere, otherwise you must generate a new one.
+* Do not share access keys - Assign each team member their own IAM user, and each IAM user their own access key
+* You can use the CLI on your PC - Your access key works anywhere, not just on AWS servers
 
 ## Elastic Load Balancer (ELB)
 
