@@ -70,20 +70,26 @@ Each EBS volume is placed in a specific AWS Availability Zone.
 
 * Create a new (cheap) EC2 AWS Linux 2 instance via the Management Console page
 * After logging on to the instance (usually as user 'ec2-user')
-  * sudo su (elevate session access to act as 'root' user)
-  * yum update -y (do this as 'root' to install updates from yum)
-  * aws s3 ls
+  * `sudo su` (elevate session access to act as 'root' user)
+  * `yum update -y` (do this as 'root' to install updates from yum)
+  * `aws s3 ls`
     * NOTE: The CLI command above **should** fail because CLI rights are not configured yet
-  * aws configure
+  * `aws configure`
     * Enter you IAM user's secret access key id and key value when prompted
     * Default region name and output format are optional (can be left blank)
-  * aws s3 ls
-  * aws s3 mb s3://test-bucket-delete-me-amh
-  * aws s3 ls
-  * echo 'Hello, World!' > hello.txt
-  * ls
-  * aws s3 cp hello.txt s3://test-bucket-delete-me-amh
-  * aws s3 ls s3://test-bucket-delete-me-amh
+  * `aws s3 ls`
+  * `aws s3 mb s3://test-bucket-delete-me-amh`
+  * `aws s3 ls`
+  * `echo 'Hello, World!' > hello.txt`
+  * `ls`
+  * `aws s3 cp hello.txt s3://test-bucket-delete-me-amh`
+  * `aws s3 ls s3://test-bucket-delete-me-amh`
+  * NOTE: If you want to disable CLI access via secret access key, then...
+    * `cd ~/.aws`
+    * `rm config`
+    * `rm credentials`
+    * You'll likely want to do this before labs that come later where you assign an instance profile to your EC2 instance
+  
 
 ### AWS CLI tips
 
@@ -125,6 +131,37 @@ Allows you to map your domain names to:
 * S3 buckets
 
 In addition to standard DNS features, you can also create a record set that is an 'alias' for an AWS resource, such as a load balancer
+
+## LAB: EC2 with S3 Role
+
+* Go to IAM in Management Console, then select Roles
+* Click "Create Role"
+* Choose "AWS service" role type, and choose "EC2" use case, then click "Next"
+* We want to assign only S3 privileges to this role, so...
+  * Type "s3" into the policy type filter
+  * Check the box for "AmazonS3FullAccess", then click "Next"
+* Skip "Tags" stage by clicking "Next"
+* Name it "MyS3AdminAccess"
+  * Edit the role description if you wish
+* Click "Create role"
+* Go to EC2 in Management Console, then select Instances
+* Select my EC2 test instance
+* Click "Actions" -> "Instance Settings" -> "Attach/Replace IAM Role"
+* Select "MyS3AdminAccess" from the dropdown list, and click "Apply"
+* Log on to your EC2 instance via SSH
+* `aws s3 ls`
+  * You should now be able to issue S3 commands via CLI without a secret access key
+  * See EC2 and CLI lab notes above for more S3 commands
+
+### exam tips related to this lab
+
+* Roles allow you to **not** use Access Key IDs and Secret Access Keys
+* **Roles are preferred** over access keys from a security perspective
+* Roles are controlled by policies
+* You can change a policy on a Role and it will take immediate affect
+* You can attach and detact roles to running EC2 instances without having to stop or terminate these instances
+
+
 
 
 
