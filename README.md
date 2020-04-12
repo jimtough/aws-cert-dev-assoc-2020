@@ -23,7 +23,7 @@ You'll need this later on during other labs. For example, the AWS CLI lab requir
 
 **FIGHTDRMCPX** "Fight Dr. McPX" - pneumonic for remembering the different types (as of 2018)
 
-Imagine Edward Norton from Fight Club against Disney's Scrooge McDuck
+Imagine Edward Norton from Fight Club against Disney's Scrooge McDuck who likes to share pictures from Scotland
 
 * F = FPGA
 * I = IOPS
@@ -62,7 +62,7 @@ Each EBS volume is placed in a specific AWS Availability Zone.
   * lowest cost storage for infrequently accessed workloads
   * file server
   * NOTE: CANNOT be a boot volume!
-* Standard: magnetic HDD
+* Standard: magnetic HDD (previous generation type)
   * Lowest cost per gigabyte of all EBS volume types that IS BOOTABLE
   * magnetic volumes are ideal for infrequently accessed data where lowest storage cost is important
 
@@ -94,10 +94,17 @@ Each EBS volume is placed in a specific AWS Availability Zone.
 ### AWS CLI tips
 
 * Least Privilege - Always give users the minimum amount of access required
-* Create Groups - Assign users to Groups, and assign permissions to the Group rather than the User. Group permissions are assigned via policy documents.
+* Create Groups - Assign users to Groups, and assign permissions to the Group rather than the User.
+  * **Group permissions are assigned via policy documents**
 * Secret Access Key - You will only see this once! You must save it somewhere, otherwise you must generate a new one.
 * Do not share access keys - Assign each team member their own IAM user, and each IAM user their own access key
 * You can use the CLI on your PC - Your access key works anywhere, not just on AWS servers
+
+### AWS EC2 exam tips
+
+* You can encrypt the root device volume (the volume the OS is installed on) using Operating System level encryption
+* You can encrypt the root device volume by first taking a snapshot of that volume and then creating a copy of that snapshot with encryption. You then make an AMI of this snapshot and deploy the encrypted root device volume.
+* You can encrypt the additional attached volumes using the console, CLI or API
 
 ## Elastic Load Balancer (ELB)
 
@@ -249,7 +256,133 @@ wget https://s3.amazonaws.com/acloudguru-production/connect.php
   * You should now get the expected response with 'Connected to MySQL' at the start
 
 
-  
+## RDS - Backups, Multi-AZ and Read Replicas - lecture
+
+### backup types
+* There are two different types of backups for AWS: Automated Backups and Database Snapshots
+
+#### Automated Backups
+* Automated Backups allow you to recover your database to any point in time within a "retention period"
+  * retention period for daily backups can be between 1 and 35 days
+* Automated Backups will take a full daily snapshot and will also stored transaction logs throughout the day
+* When you do a recovery AWS will choose the most recent daily backup and then apply transaction logs relevant to that day
+  * This allows you to do a point in time recovery down to a second within the retention period 
+* Automated Backups are enabled by default
+* Automated Backup data is stored in S3 and you get free S3 storage equal to the size of your database
+* Backups are taken within a defined window
+  * During the backup windows, storage I/O may be suspended while your data is being backed up and you may experience elevated latency
+* Automated Backups are deleted when you delete the RDS instance!
+
+#### Database Snapshots
+
+* Database Snapshots are done manually (user-initiated)
+* These are stored even after you delete the original RDS instance, unlike Automated Backups
+
+### Restoring from a backup
+
+Whenever you restore either an Automated Backup or a Database Snapshot, the restored version of the database will be a new RDS instance with a new DNS endpoint name
+
+### Encryption
+
+* All database types support "encryption at rest" using the AWS KMS service
+* An encrypted RDS instance will encrypt the underlying data storage, the automated backups, read replicas, and database snapshots
+* (At present time) you cannot encrypt a non-encrypted RDS instance - you must first create a snapshot, make a copy of the snapshot and then encrypt the copy
+
+### Multi-AZ enabled databases
+
+Multi-AZ enabled databases will apply all writes to the database to a second instance that resides in a different AZ in that region
+
+**Used for DR, NOT for scaling!**
+
+* This is done for disaster recovery reasons, NOT to improve performance!
+* if AZ 1 is lost, then AZ 2 will have an up-to-date copy of the instance and will automatically fail over to AZ 2
+* AWS will automatically update the RDS DNS endpoint name with the failover database instance if primary AZ instance goes down
+* AWS handles the replication for you - writes are automatically synchronized to the standby database
+* In the event of planned database maintenance, instance failure, or AZ failure, RDS will automatically failover to the standby database without manual intervention
+
+### Read Replicas
+
+This is a performance enhancement for databases that are hit with frequent read operations
+
+**Used for scaling, NOT for DR!**
+
+* Read replicas allow you to have a read-only copy of your production database
+* Achieved using asynchronous replication from the primary RDS instance to (one or more) read replica database
+* Used primarily for very read-heavy database workloads
+* Currently available for these database types:
+  * MySQL Server
+  * PostgreSQL
+  * MariaDB
+  * Aurora
+* **You must have Automatic Backups enabled in order to deploy a read replica!**
+* You can have up to 5 read replica copies of any database
+* You can have read replicas or read replicas (but latency can be an issue if you do this)
+* Each read replica will have its own DNS endpoint
+* You can have read replicas that have Multi-AZ
+* You can create replicas of Multi-AZ source databases
+* Read replicas can be promoted to be their own databases, but this breaks the replication
+* You can have a read replica **in a different region** (currently for MySQL and MariaDB)
+
+## Elasticache
+
+Elasticache is a web service that makes it easy to deploy, operate and scale an in-memory cache in the cloud.
+The service improves the performance of web applications by allowing you to retrieve info from fast, managed in-memory caches instead of relying entirely on slower disk-based databases.
+
+Amazon ElastiCache can be used to significantly improve latency/throughput for read-heavy application workloads or compute-intensive workloads (such as a recommendation engine).
+
+Caching improves performance by storing critical pieces of data in memory for low-latency access.
+Cached information may include the results of I/O-intensive database queries or the results of computationally-intensive calculations.
+
+### Elasticache types
+
+#### Memcached
+
+A widely adopted memory object caching system. Elasticache is protocol compliant with Memcached, so existing tools will work seamlessly with the service.
+
+Memcached is designed as a pure caching solution with no persistence.
+Elasticache manages Memcached nodes as a pool that can grow or shrink, similar to an AWS EC2 auto-scaling group.
+Individual nodes are expendable, and Elasticache provides additional capabilities here such as automatic node replacement and Auto Discovery.
+
+**Use Cases for Memcached**
+* Object caching to reduce load on your database
+* Want to use as simple a caching model as possible
+* Want to run large cache nodes and require multithreaded performance using multiple cores
+* Want ability to scale the cache horizontally as you grow
+
+#### Redis
+
+A popular open-source in-memory key-value store that supports data structures such as sorted sets and lists.
+
+Elasticache supports Master/Slave replication and Multi-AZ which can be used to achieve cross-AZ redundancy (Memcached cannot do this).
+
+AWS handles Redis more like a relational database, since it supports replication and persistence.
+Redis Elasticache clusters are managed as stateful entities that include failover, similar to how RDS manages database failover.
+
+**Use Cases for Redis**
+* Want to use more advanced data types such as lists, hashes and sets
+* **If sorting and ranking datasets in memory helps you, such as with leaderboards**
+* If persistence of your key store is important
+* If you want to run in multiple AZs with failover 
+
+#### Elasticache exam tips
+
+Typically you will be given a scenario where a particular database is under a lot of stress/load.
+You may be asked which service you should use to alleviate this.
+
+* Elasticache is a good choice if your database is particularly read-heavy and not prone to frequent changing
+* Redshift is a good answer if the reason your database is under stress is bacause management keeps running OLAP transactions on it
+* Use **Memcached** if:
+  * Object caching is your primary goal
+  * You want to keep things as simple as possible
+  * You want to scale your cache horizontally (scale out)
+* Use **Redis** if: 
+  * You have advanced data types, such as lists, hashes and sets
+  * You are doing data sorting and ranking (such as leaderboards)
+  * Data persistence
+  * Multi-AZ
+  * Pub/Sub capabilities are needed
+
+
 
 
 
