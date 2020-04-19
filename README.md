@@ -480,6 +480,15 @@ You will be charged for the following
 Official S3 docs: https://aws.amazon.com/s3/faqs/
 * Good to review this just before taking the exam
 
+## S3 Security
+
+* By default, newly created S3 Buckets are PRIVATE
+* You can set up access control to your buckets using:
+  * Bucket Policies - applied at Bucket level
+  * Access Control Lists - applied at Object level
+* S3 Buckets can be configured to create access logs which log all requests make to the S3 Bucket
+  * The logs can be written to another S3 Bucket
+
 
 
 
