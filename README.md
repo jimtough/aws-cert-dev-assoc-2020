@@ -382,6 +382,109 @@ You may be asked which service you should use to alleviate this.
   * Multi-AZ
   * Pub/Sub capabilities are needed
 
+# S3 (Simple Storage Service)
+
+S3 provides secure, durable, highly-scalable object storage.
+
+* A safe place to storage your files
+* Object-based storage (files, etc) - NOT BLOCK STORAGE!
+* The data is spread across multiple devices and facilities
+
+## S3 basics
+
+* S3 is Object based (allows you to upload files)
+* Files can be from 0 bytes to 5 Tb
+* There is unlimited storage
+* Files are stored in Buckets
+* S3 is a universal namespace (each Bucket name must be unique globally across all of Amazon's customers)
+  * The Bucket name is used in URLs, so that is one reason for the uniqueness requirement
+* When you upload a file to S3 you will receive a HTTP 200 code if the upload was successful
+* Built for 99.99% availability for the S3 platform
+* Amazon **guarantee** 99.9% availability
+* Amazon guarantees 99.99999999999% (11 9's) **durability** for S3 information
+* Tiered storage available
+* Lifecycle management
+* Versioning
+* Encryption
+* Secure your data - Access Control Lists and Bucket Policies
+
+
+## Data Consistency model for S3
+
+* "Read after Write Consistency" for PUTs of **new** Objects
+* "Eventual Consistency" for **overwrite** PUTs and DELETEs (can take some time to propagate)
+
+## S3 is a simple key/value store
+
+* S3 is Object-based. Objects consist of the following:
+  * Key (simply the name of the object)
+  * Value (simply the data, which is made up of a sequence of bytes)
+  * Version ID (important for versioning)
+    * S3 supports version control
+  * Metadata (data about the data you are storing)
+  * Subresources (Bucket-specific configuration)
+    * Bucket policies, access control lists
+    * Cross-origin resource sharing (CORS)
+    * Transfer Acceleration
+
+## S3 Storage Tiers and Classes
+
+* S3: 99.9% **availability** and 99.99999999999% (11 9's) **durability**, storage redundantly across multiple devices in multiple facilities
+  * Designed to sustain the loss of 2 facilities concurrently
+* S3 IA (Infrequently Accessed): For data that is accessed less frequently but requires rapid access when needed
+  * Lower fee for storage than S3, but you are charged a fee to retrieve files
+* S3 - One Zone IA: Same as IA however data is stored in a single AZ only
+  * Still 9 11's durability, but only 99.5% availability
+  * Cost is 20% less than regular S3 IA
+* Reduced Redundancy Storage: Designed to provide 99.99% durability and 99.99% availability of objects over a given year
+  * Used for data that can be recreated is lost (example: thumbnails)
+  * NOTE: This option is starting to disappear from AWS documentation by may still appear on the exam
+* Glacier: Very cheap, but used for archival only
+  * Optimized for data that is infrequently accessed
+  * **No real-time access** - takes 3 to 5 hours to restore from Glacier
+  * There is a fee to restore files from Glacier
+
+### S3 Intelligent Tiering (new service as of Nov 2018)
+
+* Unknown or unpredictable access patterns
+* 2 tiers - frequent and infrequent access
+* Automatically moves your data to most cost-effective tier based on how frequently you access each object
+* 11 9's durability
+* 99.9% availability over a given year
+* Optimizes your cost
+* No fees for accessing your data, but a small monthly fee for monitoring/automation of $0.0025 per 1000 objects
+
+## S3 Charges
+
+You will be charged for the following
+* Storage per Gb of data
+* Number of requests (GET, PUT, copy, etc.)
+* Storage Management pricing
+  * inventory, analytics, object tags
+* Data Management pricing
+  * Data transferred out of S3 (downloads, etc)
+* Transfer Acceleration
+  * Use of CloudFront to optimize transfers
+
+## S3 Exam tips
+
+* **NOT suitable to install an operating system or run a database on**
+* Files can be from 0 bytes to 5 Tb
+* There is unlimited storage
+* Files are stored in Buckets
+* S3 is a universal/global namespace
+* "Read after Write Consistency" for PUTs of **new** Objects
+* "Eventual Consistency" for **overwrite** PUTs and DELETEs (can take some time to propagate)
+* When you upload a file to S3 you will receive a HTTP 200 code if the upload was successful (when using CLI or API)
+
+Official S3 docs: https://aws.amazon.com/s3/faqs/
+* Good to review this just before taking the exam
+
+
+
+
+
+
 
 
 
