@@ -489,7 +489,66 @@ Official S3 docs: https://aws.amazon.com/s3/faqs/
 * S3 Buckets can be configured to create access logs which log all requests make to the S3 Bucket
   * The logs can be written to another S3 Bucket
 
+## S3 Encryption
 
+### Encryption types
+
+* In Transit
+  * SSL/TLS
+* At Rest
+  * Server Side Encryption
+    * S3 managed keys (SSE-S3)
+      * Each object is encrypted with its own unique key
+      * Each encryption key is ALSO encrypted with a master key that is regularly rotated
+      * Amazon manages all this for you
+    * AWS KMS managed keys (SSE-KMS)
+      * ??? (what is an 'envelope key'?)
+      * Provides an audit trail of who used the key, when it was used, and for what purpose
+    * server side encryption with customer provided keys (SSE-C)
+      * Amazon managed the encryption and decryption operations, but you manage the keys
+  * Client Side Encryption
+    * Customer encrypts their own files before they are loaded into S3
+
+### How to enforce encryption on S3 Buckets
+
+* Every time a file is uploaded to S3, a PUT request is initiated
+  * The HTTP request header contains this: `Expect: 100-continue`
+    * Tells S3 not to send the body of the request until it receives an acknowledgement
+    * Allows S3 to reject your PUT request based on the contents of the header
+  * If the file is to be encrypted at uploaded time, the `x-amz-server-side-encryption` parameter will be included in the request header
+    * Two options are currently available:
+      * `x-amz-server-side-encryption: AES256` (SSE-S3 - S3 managed keys)
+      * `x-amz-server-side-encryption: ams:kms` (SSE-KMS - KMS managed keys)
+    * When this parameter is included in the header of the PUT request, it tells S3 to encrypt the object at upload time using the specified method
+    * You can enforce the use of Server Side Encryption by using a Bucket Policy which denies any S3 PUT request that is missing the `x-amz-server-side-encryption` parameter in the request header
+
+### S3 Encryption using a Bucket Policy lab
+
+In the lab, we do this by creating a Bucket Policy, and NOT by changing the 'Default encryption' settings in the management console.
+
+* Create a bucket, or use an existing one
+* Go to Permissions->Bucket Policy
+* Use the Policy Generator tool
+  * S3 Bucket Policy type
+  * Effect: Deny
+  * Principal: *
+  * AWS Service: Amazon S3
+  * Actions: PutObject
+  * Amazon Resource Name: (ARN of your S3 bucket - shown on Bucket Policy page)
+  * Click "Add Conditions"
+    * Condition: `StringNotEquals`
+    * Key: `s3:x-amz-server-side-encryption`
+    * Value: `aws:kms` (or whichever server-side encryption type you want to enforce)
+  * Click "Add Statement"
+  * Click "Generate Policy"
+  * Copy policy JSON, paste into Bucket Policy page, and click Save
+  * At this point, I get an Error: "Action does not apply to any resource(s) in statement"
+    * Fix this by added a wildcard to the "Resource" in the policy:
+      * `"Resource": "arn:aws:s3:::adultmalehuman-encrypted-bucket",`
+      * `"Resource": "arn:aws:s3:::adultmalehuman-encrypted-bucket/*",`
+      * Click "Save" again and it should work
+* Now try to upload a test file to the S3 bucket without encryption enabled, and it should fail with "Forbidden" error
+* Now try to upload a test file with S3 KMS encryption enabled, and it should succeed
 
 
 
