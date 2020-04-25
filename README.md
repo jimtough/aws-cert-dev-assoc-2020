@@ -550,6 +550,65 @@ In the lab, we do this by creating a Bucket Policy, and NOT by changing the 'Def
 * Now try to upload a test file to the S3 bucket without encryption enabled, and it should fail with "Forbidden" error
 * Now try to upload a test file with S3 KMS encryption enabled, and it should succeed
 
+### S3 CORS (Cross-Origin Resource Sharing) Configuration lab
+
+* Create a new Public-access-allowed S3 bucket (myindexwebsite)
+* Properties->Static website hosting
+  * Use this bucket to host a website
+  * index.html
+  * error.html
+  * Click Save
+* Upload index.html, error.html and loadpage.html to the S3 bucket
+  * Make sure to enable "Grant public read access to this object(s)" for all 3 files
+* Go back to Properties->Static website hosting and click the Endpoint link - you should see the HTML pages loaded
+* All the pieces of the web page have been loaded from one S3 bucket
+
+Now we want to enable CORS and then spread out the web page resources between multiple S3 buckets
+
+* Go back to the bucket created above (myindexwebsite) and delete file `loadpage.html`
+* Create a new S3 bucket (my-cors-test-bucket)
+  * **PROBLEM** The lab says to uncheck all the public access options, but won't work in the current S3 console page because then you cannot make `loadpage.html` publicly accessible in a step below
+    * **WORKAROUND** Just leave all public access options as allowed for the purpose of this lab
+* Properties->Static website hosting
+  * Use this bucket to host a website
+  * index.html
+  * error.html
+  * Click Save
+* Upload **only** loadpage.html to the new S3 bucket
+  * Make sure to enable "Grant public read access to this object(s)" for this file
+* Go back to Properties->Static website hosting and copy the Endpoint link, append /loadpage.html, then paste into a browser
+  * The HTML fragment from `loadpage.html` should display in the browser
+  * Copy the URL to `loadpage.html` (will need it below)
+* Edit your local copy of `index.html` and replace the reference to `loadpage.html` in the `load()` function call with the full URL to `loadpage.html` in your new bucket
+* Upload the new version of `index.html` to the original S3 bucket (myindexwebsite) and overwrite the original version that exists there
+  * Make sure to enable "Grant public read access to this object(s)" for this file
+* Go to the first bucket (myindexwebsite)
+  * Go back to Properties->Static website hosting and click the Endpoint link - you should see only the `index.html` part of the page load, but the fragment from `loadpage.html` is still missing
+  * Using Chrome, you can open Developer Tools and see the error message - something like this: 
+    * `Access to XMLHttpRequest at 'XXXX' from origin 'YYYY' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource`
+* Go to the second bucket (my-cors-test-bucket)
+  * Permissions->CORS configuration
+  * Click the "Documentation" link at the bottom of the page for info on how to format a CORS configuration
+  
+example:
+```
+<?xml version="1.0" encoding="UTF-8"?>
+<CORSConfiguration xmlns="http://s3.amazonaws.com/doc/2006-03-01/">
+<CORSRule>
+    <AllowedOrigin>*</AllowedOrigin>
+    <AllowedMethod>GET</AllowedMethod>
+    <AllowedHeader>*</AllowedHeader>
+</CORSRule>
+</CORSConfiguration>
+```
+
+* In the lab, we replace the * in "AllowedOrigin" with the Static Website Hosting endpoint URL from the first S3 bucket (myindexwebsite)
+  * If you leave the *, then it would allow CORS from any source
+
+**NOTE** Chrome seems to cache both `loadpage.html` and the error response (when CORS is not enabled). This can be confusing when experimenting during the lab. Remember to clear browser history/cache.
+
+ 
+
 
 
 
