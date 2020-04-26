@@ -390,6 +390,8 @@ S3 provides secure, durable, highly-scalable object storage.
 * Object-based storage (files, etc) - NOT BLOCK STORAGE!
 * The data is spread across multiple devices and facilities
 
+S3 FAQ: https://aws.amazon.com/s3/faqs/
+
 ## S3 basics
 
 * S3 is Object based (allows you to upload files)
@@ -704,18 +706,18 @@ We will create a "Distribution" in CloudFront. The "Origin" will be an S3 bucket
 
 **Remember to "Disable" and then "Delete" your distribution after you're done with the lab! Otherwise you're still being billed.**
 
-### S3 Performance Optimization lecture
+## S3 Performance Optimization lecture
 
 Optimizations may be advised if you are issuing to your S3 buckets:
 * greater than 100 PUT/LIST/DELETE requests per second; AND/OR
 * greater than 300 GET requests per second
 
-#### GET-intensive workloads
+### GET-intensive workloads
 
 Use CloudFront content delivery service to get the best performance.
 CloudFront will cache your most frequently accessed objects and will reduce latency for your GET requests.
 
-#### Mixed request type workloads (mix of GET/PUT/DELETE)
+### Mixed request type workloads (mix of GET/PUT/DELETE)
 
 The key names you use for your objects can impact performance for intensive workloads.
 
