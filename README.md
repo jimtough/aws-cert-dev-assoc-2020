@@ -607,7 +607,134 @@ example:
 
 **NOTE** Chrome seems to cache both `loadpage.html` and the error response (when CORS is not enabled). This can be confusing when experimenting during the lab. Remember to clear browser history/cache.
 
- 
+## CloudFront
+
+CloudFront is Amazon's Content Delivery Network (CDN)
+
+A Content Delivery Network is a system of distributed servers that deliver web pages and other web content to a user
+based on the geographical location of the user
+
+Requests for your content are automatically routed to the nearest Edge Location so content is delivered with the best possible performance
+
+Can be used to optimize performance for used accessing a website backed by S3
+
+CloudFront also works with any non-AWS origin server, which stores the original, definitive versions of your files
+
+**EXAM TIP** Objects are cached on the Edge Location for the life of the TTL (Time To Live)
+
+**EXAM TIP** You can clear cached objects at any time, **but you will be charged a fee when you do this**
+
+**EXAM TIP** Questions about restricting web-based content to paid users are probably leading to an answer about restricting CloudFront viewer access to those with a Signed URL or Signed Cookies
+
+### CloudFront terminology
+
+* Edge Location
+  * Location on the CDN where content is cached, and can also be written
+  * **Not the same as an AWS Region or AZ!**
+  * **EXAM TIP** Edge Locations are not just read-only - you can `PUT` an object on to them (see: S3 Transfer Acceleration)
+* Origin
+  * This is the origin of all the files that the CDN will distribute
+  * Origins can be:
+    * an S3 bucket
+    * an EC2 instance
+    * an Elastic Load Balancer
+    * Route53
+* Distribution
+  * This is the name given to the CDN, which consists of a collection of Edge locations
+* Web Distribution
+  * Typically used for web sites
+* RTMP
+  * Used for Media Streaming
+
+### CloudFront distribution types
+
+* Web Distribution
+  * Used for websites, HTTP/HTTPS
+  * Origin can be an S3 bucket or an HTTP/HTTPS server
+  * You **cannot** serve Adobe Flash multimedia content from a Web Distribution! 
+* RTMP Distribution (Adobe Real Time Messaging Protocol)
+  * Used for Media Streaming / Flash multimedia content
+
+### CloudFront and S3 Transfer Acceleration
+
+Amazon S3 Transfer Acceleration enables fast and secure transfers of files over long distances between your end users and an S3 bucket.
+
+Transfer Acceleration takes advantage of Amazon CloudFront's globally distributed Edge Locations.
+As data arrives at an edge location, the data is routed to S3 over an optimized network path. 
+
+### CloudFront lab
+
+We will create a "Distribution" in CloudFront. The "Origin" will be an S3 bucket in a distant AWS Region from me.
+
+* Create a new S3 bucket in a distant region (I'll use Asia Pacific - Sydney)
+  * Name it `my-cf-origin` or something similar
+  * Make all the public access options **allow** public access
+* Upload an image file to the bucket
+  * Use an image file that is at least 3+ Mb because we want to test download performance with and without CloudFront - bigger is better
+  * Grant public read access to the uploaded image file
+* Click the S3 URL for your image and confirm that you can view it in a browser
+* Go to "CloudFront" service in the AWS management console
+* Click "Create Distribution"
+  * Choose a "Web" distribution type and click the Get Started button
+  * Click in the box for Origin Domain Name and select the S3 bucket that you created above
+  * Leave Origin Path empty (we would use this if we only wanted to share a specific S3 bucket folder, for example)
+  * Leave the default Origin ID
+  * Click "Yes" for "Restrict Bucket Access" (this will prevent users from directly accessing the Origin files from S3)
+  * Click "Create a New Identity" for "Origin Access Identity"
+  * (OPTIONAL) Edit the "Comment" field to a value of your choice
+  * Click "Yes, Update Bucket Policy" for "Grant Read Permissions on Bucket"
+  * Scroll down to "Default Cache Behavior Settings"
+  * Click "Redirect HTTP to HTTPS" for "Viewer Protocol Policy"
+  * Leave "Allowed HTTP Methods" as the default value ("GET,HEAD")
+  * Keep all the default values in Distribution Settings
+  * **TIP** - If you are using a private VPN service, I would advise against using the "Geo Restriction" settings on your deployment. Using a Geo Restriction seems to put private VPN service users in grey area where Geo Restriction settings will always block you no matter your VPN endpoint.
+  * Scroll to bottom and click "Create Distribution"
+* Click "Distributions" in left-side navigation bar
+* Expect that it will require up to 15 minutes for your distribution to be configured for use (it is probably provisioning on all of its Edge Location instances)
+* Wait until your distribution has become active...
+* Go back to your S3 bucket, edit the detail for your uploaded image file, and **remove** Public read-only access
+* Click the S3 URL for your image and confirm that you can **no longer** view it in a browser (you may need to clear your browser cache)
+  * You should get an AccessDenied error when you try to navigate to the URL
+* Go back to "CloudFront" and open the details for your distribution
+  * Go to the "General" tab
+  * Copy the "Domain Name" value - we will use this as part of the URL to view the image file in a browser
+  * Create a new **HTTP** URL:
+    * "http://" + your CloudFront distribution domain name + "/" + your image file name
+    * example: `http://d3doodahdoodahz.cloudfront.net/myimage.jpg`
+
+**Remember to "Disable" and then "Delete" your distribution after you're done with the lab! Otherwise you're still being billed.**
+
+### S3 Performance Optimization lecture
+
+Optimizations may be advised if you are issuing to your S3 buckets:
+* greater than 100 PUT/LIST/DELETE requests per second; AND/OR
+* greater than 300 GET requests per second
+
+#### GET-intensive workloads
+
+Use CloudFront content delivery service to get the best performance.
+CloudFront will cache your most frequently accessed objects and will reduce latency for your GET requests.
+
+#### Mixed request type workloads (mix of GET/PUT/DELETE)
+
+The key names you use for your objects can impact performance for intensive workloads.
+
+* S3 uses the key name to determine which partition an object will be stored in
+* The use of sequential key names (prefixed with a timestamp or alphanumeric sequence) increases the likelihood of having multiple objects on the same partition
+  * For heavy workloads this can cause I/O issues and contention
+* Use a random prefix to key names - this will help S3 distribute your keys across multiple partitions and distribute the I/O workload
+  * Even a random 4-character prefix is helpful
+  * (The lecture isn't clear on whether this only applies to S3 folder name keys or if it also matters for the file objects)
+
+**IMPORTANT**
+
+**It seems that AWS no longer advises the "random prefix key names" workaround described above!**
+
+This change happened in July 2018. AWS fixed that performance issue internally as part of an S3 performance increase upgrade.
+You no longer need to worry about S3 keynames. So... I guess basically forget all the stuff mentioned above on this.
+The advice to use CloudFront for GET-intensive workloads still applies of course, but the point where this becomes necessary is probably at a higher GETs-per-second limit now.
+
+
 
 
 
