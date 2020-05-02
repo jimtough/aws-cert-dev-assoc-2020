@@ -737,6 +737,152 @@ You no longer need to worry about S3 keynames. So... I guess basically forget al
 The advice to use CloudFront for GET-intensive workloads still applies of course, but the point where this becomes necessary is probably at a higher GETs-per-second limit now.
 
 
+# Serverless Computing
+
+## AWS Lambda
+
+AWS Lambda is a compute service where you can upload your code and create a Lambda function.
+AWS Lambda takes care of provisioning and managing the servers that you use to run the code.
+You don't have to worry about operating systems, patching, scaling, etc.
+
+You can use Lambda in the following ways:
+* **As an event-driven compute service where AWS Lambda runs your code in response to events.** These events could be changes to data in an Amazon S3 Bucket, or an Amazon DynamoDB table.
+* **As a compute service to run your code in response to HTTP requests using Amazon API Gateway or API calls made using AWS SDKs.**
+
+### Supported languages for Lambda function code
+* Node.js
+* Java
+* Python
+* C#
+* Go
+
+### How is Lambda priced?
+
+Pricing is a combination of:
+
+* Number of Lambda requests
+  * First 1 million requests are free
+  * $0.20 per 1 million requests thereafter
+* Duration of execution time
+  * Duration is calclulated from the time your code begins executing until it returns or otherwise terminates, rounded up to the nearest 100ms
+  * Price depends on the amount of memory you allocate to your function. You are charged $0.00001667 for every GB-second used.
+  
+### Why is Lambda so good?
+
+* NO SERVERS!
+* Continuous scaling (managed by AWS)
+* Super super super cheap!
+
+SIDE NOTE: Every time you issue a voice command to an Amazon Echo, you are sending inputs to an AWS Lambda function
+
+### Lambda exam tips
+
+* Lambda scales out (not up) automatically
+  * Executing millions of executions in parallel is no problem (scale out)
+  * If your Lamdba function needs more memory, then the developer needs to make adjustments (scale up)
+* Lambda functions are independent: 1 event = 1 function
+* Lambda is serverless
+* you need to know what AWS services are serverless
+  * Lambda
+  * API Gateway
+  * S3
+  * DynamoDB
+  * etc...
+  * Some things that are NOT serverless
+    * most of RDS
+    * EC2
+* A Lambda function can trigger of Lambda functions
+  * 1 event can = X function executions if functions trigger other functions
+* Architectures can get extremely complicated - AWS X-Ray allows you to debug what is happening
+* Lambda can do things globally
+  * You can use it to back up S3 Buckets to other S3 Buckets, etc
+* Know your Lambda triggers!
+
+## API Gateway
+
+API = Application Programming Interface
+
+Types of APIs:
+* **REST APIs:** REpresentational State Transfer
+  * Uses JSON
+* **SOAP APIs:** Simple Object Access Protocol
+  * Uses XML
+  * Aging API that has been around since the late 1990s
+  
+**Amazon API Gateway** is a fully managed service that makes it easy for developers to publish, maintain, and secure APIs at any scale.
+With a few clicks in the AWS Management Console, you can create an API that acts as a "front door" for applications
+to access data, business logic, or functionality from your back-end services, such as applications running on EC2,
+code running on AWS Lambda, or any web application.
+
+### What can API Gateway do?
+
+* Expose HTTPS endpoints to define a RESTful API
+* Serverless-ly connect to services like Lambda and DynamoDB
+* You can send each API endpoint to a different target
+* Run efficiently with low cost
+* Scale effortlessly
+* Track and control usage by API key
+* Throttle requests to prevent attacks
+* Connect to CloudWatch to log all requests for monitoring
+* Maintain multiple versions of your API
+
+### How to I configure API Gateway?
+
+* Define an API (container)
+* Define Resources and nested Resources (URL paths)
+* For each Resource:
+  * Select supported HTTP methods (GET, POST, PUT, DELETE, etc)
+  * Set security
+  * Choose target (such as EC2, Lambda, DynamoDB, etc.)
+  * Set request and response transformations
+* Deploy API to a Stage
+  * Uses API Gateway domain by default
+  * You can use your own custom domain
+  * Now supports AWS Certificate Manager: free SSL/TLS certs if you bought your domain via Route53
+
+### What is API Caching?
+
+You can enable **API Caching** in API Gateway to cache your endpoint's response.
+With caching, you can reduce the number of calls made to your endpoint and also improve the latency of requests to your API.
+When you enable caching for a stage, API Gateway caches responses from your endpoint for a specified TTL (time-to-live) period, in seconds.
+API Gateway then responds to the request by looking up the endpoint response from the cache instead of making a request to your endpoint.
+
+### What is Same Origin Policy?
+
+In computing, the **same-origin policy** is an important concept in the web application security model.
+Under the policy, a web browser permits scripts contained in a first web page to access data in a second web page,
+but only if both web pages have the same origin.
+
+This is done to prevent Cross-Site Scripting (XSS) attacks.
+
+* Enforced by web browsers
+* Ignored by tools like PostMan and curl
+
+#### Role of CORS in Same Origin Policy
+**Cross-Origin Resource Sharing (CORS)** is one way the server at the other end (not the client code in the browser) can relax the same-origin policy.
+
+CORS is a mechanism that allows restricted resources (e.g. fonts) on a web page to be requested from another domain
+outside the domain from which the first resource was served.
+
+* Browser makes an HTTP OPTIONS call for a URL
+  * OPTIONS is an HTTP method like GET, PUT and POST
+* Server returns a response that says:
+  * "These other domains are approved to GET this URL"
+* Error - "Origin policy cannot be read at the remote resource?"
+  * You need to enable CORS on API Gateway
+  
+### API Gateway exam tips
+
+* API Gateway has caching abilities to increase performance
+* API Gateway is low cost and scales automatically
+* You can throttle API Gateway to prevent attacks
+* You can log results to CloudWatch
+* If you are using Javascript/AJAX that uses multiple domains with API Gateway, ensure that you have enabled CORS on API Gateway
+* CORS is enforced by the client browser!
+ 
+ 
+
+
 
 
 
